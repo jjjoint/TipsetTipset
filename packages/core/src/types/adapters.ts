@@ -10,6 +10,7 @@ export interface AdapterResult<T> {
 }
 
 export interface RawOdds {
+  matchId?: string;
   homeOdds: number;
   drawOdds: number;
   awayOdds: number;
@@ -43,6 +44,7 @@ export interface PublicPicksAdapter {
 
 export interface OddsAdapter {
   fetchOddsForMatch(homeTeam: string, awayTeam: string, date: Date): Promise<AdapterResult<RawOdds>>;
+  fetchOddsForRound?(roundId: string): Promise<AdapterResult<RawOdds[]>>;
 }
 
 export interface FootballStatsAdapter {
