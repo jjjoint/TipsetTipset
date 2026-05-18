@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@tipset/core": ["../core/src/index.ts"],
+      "@tipset/model": ["../model/src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}

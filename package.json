@@ -1,0 +1,23 @@
+{
+  "name": "tipset-tipset",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @tipset/web dev",
+    "build": "pnpm --filter @tipset/web build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @tipset/db db:generate",
+    "db:push": "pnpm --filter @tipset/db db:push",
+    "db:seed": "pnpm --filter @tipset/db db:seed",
+    "db:reset": "pnpm --filter @tipset/db db:reset"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}

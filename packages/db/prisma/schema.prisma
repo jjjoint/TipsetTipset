@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Round {
+  id           String   @id @default(cuid())
+  name         String
+  salesCloseAt DateTime
+  status       String   // "upcoming" | "open" | "closed" | "settled"
+  turnover     Float?
+  payoutInfo   String?  // JSON: { correct13, correct12, correct11, correct10 }
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  matches      Match[]
+  systems      GeneratedSystem[]
+  backtestRuns BacktestRun[]
+
+  @@map("rounds")
+}
+
+model Match {
+  id            String   @id @default(cuid())
+  roundId       String
+  round         Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  index         Int      // 1–13
+  homeTeam      String
+  awayTeam      String
+  league        String
+  startTime     DateTime
+  finalScore    String?  // "2-1"
+  actualOutcome String?  // "1" | "X" | "2"
+
+  publicPicks     PublicPicks[]
+  predictions     ModelPrediction[]
+  recommendations Recommendation[]
+
+  @@unique([roundId, index])
+  @@map("matches")
+}
+
+model PublicPicks {
+  id          String   @id @default(cuid())
+  matchId     String
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  homePercent Float
+  drawPercent Float
+  awayPercent Float
+  observedAt  DateTime @default(now())
+  source      String   @default("mock") // "live" | "imported" | "mock"
+
+  @@map("public_picks")
+}
+
+model ModelPrediction {
+  id               String   @id @default(cuid())
+  matchId          String
+  match            Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  homeProbability  Float
+  drawProbability  Float
+  awayProbability  Float
+  homeFairOdds     Float
+  drawFairOdds     Float
+  awayFairOdds     Float
+  uncertainty      Float
+  modelVersion     String
+  signals          String?  // JSON: ModelSignals
+  createdAt        DateTime @default(now())
+
+  @@map("model_predictions")
+}
+
+model Recommendation {
+  id               String   @id @default(cuid())
+  matchId          String
+  match            Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  recommendedSigns String   // JSON: ["1"] | ["1","X"] | ["1","X","2"]
+  riskCategory     String   // "spik" | "halv" | "hel" | "skräll" | "avstå"
+  valueScore       Float
+  valueRatio       Float
+  rowOwnershipEst  Float
+  explanation      String?
+  createdAt        DateTime @default(now())
+
+  @@map("recommendations")
+}
+
+model GeneratedSystem {
+  id                     String   @id @default(cuid())
+  roundId                String
+  round                  Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  budgetSek              Int
+  strategy               String
+  rows                   String   // JSON: string[][]
+  estimatedProbability10 Float
+  estimatedProbability11 Float
+  estimatedProbability12 Float
+  estimatedProbability13 Float
+  estimatedExpectedValue Float
+  simulationIterations   Int      @default(10000)
+  createdAt              DateTime @default(now())
+
+  @@map("generated_systems")
+}
+
+model Team {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  league          String
+  eloRating       Float    @default(1500)
+  attackStrength  Float    @default(1.0)
+  defenseStrength Float    @default(1.0)
+  form            String?  // JSON: ("W"|"D"|"L")[]
+  updatedAt       DateTime @updatedAt
+
+  @@map("teams")
+}
+
+model BacktestRun {
+  id               String   @id @default(cuid())
+  roundId          String
+  round            Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  modelVersion     String
+  brierScore       Float?
+  logLoss          Float?
+  calibrationData  String?  // JSON: CalibrationPoint[]
+  roi              Float?
+  runAt            DateTime @default(now())
+
+  @@map("backtest_runs")
+}
+
+model DataSourceStatus {
+  id            String   @id @default(cuid())
+  sourceName    String   @unique // "svenskaSpelRound" | "oddsData" | "footballStats" | "publicPicks" | "historicalData"
+  status        String   // "live" | "imported" | "mock" | "missing"
+  lastCheckedAt DateTime @default(now())
+  details       String?  // JSON: error/latency info
+
+  @@map("data_source_status")
+}
